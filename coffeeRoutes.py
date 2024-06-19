@@ -14,12 +14,11 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 #Route pull all contacts
-@app.get("/getelements")
-async def getMyelements(db: Session = Depends(get_db)):
+@app.get("/getcontacts")
+async def getContacts(db: Session = Depends(get_db)):
     print("I got here")
     try:
         query = db.query(models.CrmContact).all()
-        print("hello world")
         print(db.query(models.CrmContact))
         if query is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Data record not found")
@@ -28,8 +27,8 @@ async def getMyelements(db: Session = Depends(get_db)):
         print(e)
         return {"Message" : HTTPException(status_code=status.HTTP_404_NOT_FOUND)}
 #Route get unique phone numbers
-@app.get("/getelements/{p_number}")
-async def elementsByNumbers(p_number:str, db: Session = Depends(get_db)):
+@app.get("/getcontacts/{p_number}")
+async def contactPhoneNumber(p_number:str, db: Session = Depends(get_db)):
     try:
         result = db.query(models.CrmContact.first_name, models.CrmContact.last_name).filter(models.CrmContact.phone_number == p_number).all()
         print(result)
@@ -42,7 +41,7 @@ async def elementsByNumbers(p_number:str, db: Session = Depends(get_db)):
 
 #Route for all Opened Cases
 @app.get("/retrievestatus/{case_status}")
-async def getLocationData(case_status: str,db: Session = Depends(get_db)):
+async def getCaseStatus(case_status: str,db: Session = Depends(get_db)):
     try:
         #query = db.query(models.CrmCase).filter(models.CrmCase.case_object['case']['status'] == case_status)
         query = db.query(models.CrmCase).filter(
@@ -83,3 +82,5 @@ async def getClosedCases(closed_case: str, db: Session = Depends(get_db)):
     except Exception as e:
         print(e)
         return{"Messaage" : HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Server Connection Closed")}
+
+    #Get route for resolutions
