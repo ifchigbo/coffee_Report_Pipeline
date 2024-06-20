@@ -85,7 +85,18 @@ async def getClosedCases(closed_case: str, db: Session = Depends(get_db)):
 
 
 #Search Cases by  CaseID for Return Requests -> Gets the Complete case record
-@app.get("/caseid/{case_id}")
+
+@app.get("/cases/count")
+async  def GetCaseCount(db: Session = Depends(get_db)):
+    try:
+        query = db.query(models.CrmCase.ticket_id).count()
+        if query is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Items not found")
+        return {"Message" : query}
+    except Exception as e:
+        print(e)
+        return {"Message": HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Connection Timed Out")}
+@app.get("/cases/{case_id}")
 async def getCasesbyId(case_id: str, db:Session = Depends(get_db)):
     try:
         query = db.query(models.CrmCase).filter(models.CrmCase.ticket_id == case_id)
@@ -96,3 +107,18 @@ async def getCasesbyId(case_id: str, db:Session = Depends(get_db)):
     except Exception as e:
         print(e)
         return{"Message":HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Connection Timed Out")}
+
+#Get Case Resolution by Ticket ID -> Case Resolution Record by ID
+@app.get("/cases/resolution/{case_id}")
+async def getResolutionbyID(case_id:str, db: Session = Depends(get_db)):
+    try:
+        query = db.query(models.CrmCase.case_object['case']['resolution']).filter(models.CrmCase.ticket_id == case_id)
+        query_result = query.scalar()
+        print(query)
+
+        if query_result is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found ..... ")
+        return{"Data" :  query_result}
+    except Exception as e:
+        print(e)
+        return {"Message" : HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,  detail="Connection Timed Out")}
