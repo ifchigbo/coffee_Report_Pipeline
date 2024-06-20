@@ -83,4 +83,16 @@ async def getClosedCases(closed_case: str, db: Session = Depends(get_db)):
         print(e)
         return{"Messaage" : HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Server Connection Closed")}
 
-    #Get route for resolutions
+
+#Search Cases by  CaseID for Return Requests -> Gets the Complete case record
+@app.get("/caseid/{case_id}")
+async def getCasesbyId(case_id: str, db:Session = Depends(get_db)):
+    try:
+        query = db.query(models.CrmCase).filter(models.CrmCase.ticket_id == case_id)
+        query_result = query.all()
+        if query_result is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found")
+        return {"Data":query_result}
+    except Exception as e:
+        print(e)
+        return{"Message":HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Connection Timed Out")}
