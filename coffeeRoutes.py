@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from databaseConnection import get_db
 from databaseConnection import engine
 import models
+from sqlalchemy import distinct
 
 Base.metadata.create_all(bind=engine)
 
@@ -122,3 +123,17 @@ async def getResolutionbyID(case_id:str, db: Session = Depends(get_db)):
     except Exception as e:
         print(e)
         return {"Message" : HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,  detail="Connection Timed Out")}
+
+#Get total count of logged cases from inception -> Count State Recorded Incidents from  inception -> Not restricted by Date
+@app.get(("/cases/casecount/{state_id}"))
+async  def getStateCount(state_id: str, db:Session=Depends(get_db)):
+    try:
+        query = db.query(models.CrmCase.case_object['case']['victim_state']).filter(models.CrmCase.case_object['case'].op('->>')('victim_state') == state_id)
+        query_result = query.count()
+        if query_result is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="State Variable not  found")
+        return{ state_id : query_result}
+    except Exception as e:
+        print(e)
+        return {"Message": HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Connection Timed Out")}
+
