@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from databaseConnection import get_db
 from databaseConnection import engine
 import models
-from sqlalchemy import distinct
+from sqlalchemy.orm import aliased
 
 Base.metadata.create_all(bind=engine)
 
@@ -137,3 +137,28 @@ async  def getStateCount(state_id: str, db:Session=Depends(get_db)):
         print(e)
         return {"Message": HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Connection Timed Out")}
 
+#Get Cases, Description and Resolution by Contacts using Phone Numbers
+@app.get("/cases/fulldescription/{phone_id}")
+async def getFullCaseHistorybyNumber(phone_id: str, db:Session=Depends(get_db)):
+    contact = aliased(models.CrmContact)
+    cases = aliased(models.CrmCase)
+    try:
+        query = db.query(
+            models.CrmContact.first_name, models.CrmContact.last_name,
+            models.CrmContact.phone_number,
+            models.CrmContact.contact_object['contact']['address'],
+            models.CrmContact.contact_object['contact']['occupation'],
+            models.CrmCase.case_object['case']['description'],
+            models.CrmCase.case_object['case']['resolution'],
+            models.CrmCase.case_object['case']['status']
+        ).join(models.CrmCase, models.CrmContact.id == models.CrmCase.contact_id).filter(
+            models.CrmContact.contact_object['contact'].op('->>')('phone_number') == phone_id
+        )
+        print(query)
+        result_set = query.all()
+        if result_set is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Phone Number not found")
+        return {"Data":result_set}
+    except Exception as e:
+        print(e)
+        return{"Message" : HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Connection Timed Out")}
