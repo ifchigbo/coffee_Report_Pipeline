@@ -110,16 +110,16 @@ async def getCasesbyId(case_id: str, db:Session = Depends(get_db)):
         return{"Message":HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Connection Timed Out")}
 
 #Get Case Resolution by Ticket ID -> Case Resolution Record by ID
-@app.get("/cases/resolution/{case_id}")
-async def getResolutionbyID(case_id:str, db: Session = Depends(get_db)):
+@app.get("/cases/resolution/{ticket_id}")
+async def getResolutionbyID(ticket_id:str, db: Session = Depends(get_db)):
     try:
-        query = db.query(models.CrmCase.case_object['case']['resolution']).filter(models.CrmCase.ticket_id == case_id)
+        query = db.query(models.CrmCase.case_object['case']['resolution']).filter(models.CrmCase.ticket_id == ticket_id)
         query_result = query.scalar()
         print(query)
 
         if query_result is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item not found ..... ")
-        return{"Data" :  query_result}
+        return{"Resolution" :  query_result}
     except Exception as e:
         print(e)
         return {"Message" : HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,  detail="Connection Timed Out")}
@@ -146,12 +146,12 @@ async def getFullCaseHistorybyNumber(phone_id: str, db:Session=Depends(get_db)):
         query = db.query(
             models.CrmContact.first_name, models.CrmContact.last_name,
             models.CrmContact.phone_number,
-            models.CrmContact.contact_object['contact']['address'],
-            models.CrmContact.contact_object['contact']['occupation'],
-            models.CrmCase.case_object['case']['description'],
-            models.CrmCase.case_object['case']['resolution'],
-            models.CrmCase.case_object['case']['status']
-        ).join(models.CrmCase, models.CrmContact.id == models.CrmCase.contact_id).filter(
+            models.CrmContact.contact_object['contact'].op('->>')('address').label('address'),
+            models.CrmContact.contact_object['contact'].op('->>')('occupation').label('occupation'),
+            models.CrmCase.case_object['case'].op('->>')('description').label('description'),
+            models.CrmCase.case_object['case'].op('->>')('resolution').label('resolution'),
+            models.CrmCase.case_object['case'].op('->>')('status').label('status')
+        ).join(models.CrmContact, models.CrmContact.id == models.CrmCase.contact_id).filter(
             models.CrmContact.contact_object['contact'].op('->>')('phone_number') == phone_id
         )
         print(query)
