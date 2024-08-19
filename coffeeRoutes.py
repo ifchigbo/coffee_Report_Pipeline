@@ -90,7 +90,7 @@ async def getClosedCases(closed_case: str, db: Session = Depends(get_db)):
 #Search Cases by  CaseID for Return Requests -> Gets the Complete case record
 
 @app.get("/cases/count")
-async  def GetCaseCount(db: Session = Depends(get_db)):
+async def GetCaseCount(db: Session = Depends(get_db)):
     try:
         query = db.query(models.CrmCase.ticket_id).count()
     except Exception as e:

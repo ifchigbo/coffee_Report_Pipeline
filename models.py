@@ -235,6 +235,7 @@ class CrmContact(Base):
     twitter = Column(Text)
 
 
+
 class CrmConversationSource(Base):
     __tablename__ = 'crm_conversation_source'
 
